@@ -80,28 +80,43 @@ public class MainActivity extends AppCompatActivity {
 
         protected List<PastTravel> doInBackground(String... urls) {
             try {
-                String resp = run("http://207.154.234.13/mobile");
+                String resp = run("http://207.154.234.13/");
                 Log.d("CIBO", resp);
 
-                JSONObject myJson = new JSONObject(run("http://207.154.234.13/mobile"));
-                JSONArray historicData = myJson.getJSONArray("pastTravels");
+                JSONArray myJson = new JSONArray(resp);
 
                 List<PastTravel> travelList = new ArrayList<PastTravel>();
-                for (int i = 0; i < historicData.length(); i++) {
-                    JSONObject pastTravel = historicData.getJSONObject(i);
+                for (int i = 0; i < myJson.length(); i++) {
+                    JSONObject pastTravel = myJson.getJSONObject(i);
 
-                    String fromStation = pastTravel.getString("fromStation");
-                    String startTime = pastTravel.getString("startTime");
+                    String fromStation = pastTravel.getString("startStation");
+
+                    long startTime = Long.parseLong(pastTravel.getJSONObject("startTime").getLong("timestamp") + "000");
+
                     String endStation = pastTravel.getString("endStation");
-                    String endTime = pastTravel.getString("endTime");
-                    String cost = pastTravel.getString("cost");
+
+                    //TODO: Fix dis!
+                    long endTime = Long.parseLong(pastTravel.getJSONObject("endTime").getLong("timestamp") + "000");
+
+                    int cost = pastTravel.getInt("price");
+
+                    String line = pastTravel.getString("line");
+                    String lineColor = pastTravel.getString("lineColor");
+
+                    int travelLength = (int)(endTime - startTime) / 1000;
+
+                    int countStations = pastTravel.getInt("countStations");
 
                     travelList.add(new PastTravel(
                             fromStation,
                             startTime,
                             endStation,
                             endTime,
-                            cost
+                            cost,
+                            line,
+                            lineColor,
+                            travelLength,
+                            countStations
                     ));
                 }
                 return travelList;
@@ -112,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(List<PastTravel> feed) {
-            recyclerView.setAdapter(new ItemRecyclerViewAdapter(feed));
+            recyclerView.setAdapter(new ItemRecyclerViewAdapter(getApplicationContext(), feed));
             swipeRefresh.setRefreshing(false);
         }
     }
